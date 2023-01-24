@@ -68,11 +68,10 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        super.onPause();
         if (hilo != null && hilo.isAlive()) {
             hilo.interrupt();
-            Toast.makeText(this, "Ejecución parada", Toast.LENGTH_SHORT).show();
         }
+        super.onPause();
     }
 
     protected void cierraTeclado(){

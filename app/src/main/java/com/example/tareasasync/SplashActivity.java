@@ -13,23 +13,18 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class SplashActivity extends AppCompatActivity {
 
-    private int espera = 4000;
+    private int espera;
     private String mensajeDeTareaPesada;
     private ProgressDialog progressDialog;
     private ExecutorService service;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        espera = ThreadLocalRandom.current().nextInt(1, 5001);
-
-        super.onCreate(savedInstanceState);
-
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
-        getSupportActionBar().setIcon(R.mipmap.ic_unicorn_launcher_round);
-
-        setContentView(R.layout.activity_splash);
+    public void onStart() {
+        super.onStart();
 
         service = Executors.newSingleThreadExecutor();
+
+        espera = ThreadLocalRandom.current().nextInt(3000, 6001);
 
         service.execute(() -> {
             //Con este metodo, simulamos el onPreExecute
@@ -52,15 +47,25 @@ public class SplashActivity extends AppCompatActivity {
                 startActivity(intent);
             });
         });
+
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        espera = ThreadLocalRandom.current().nextInt(1, 5001);
+
+        super.onCreate(savedInstanceState);
+
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setIcon(R.mipmap.ic_unicorn_launcher_round);
+
+        setContentView(R.layout.activity_splash);
     }
 
     private String tareaPesada(int tiempo){
         try {
             Thread.sleep(tiempo);
             return "Dormido durante " + tiempo + " milisegundos";
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            return e.getMessage();
         } catch (Exception e) {
             e.printStackTrace();
             return e.getMessage();
@@ -73,7 +78,6 @@ public class SplashActivity extends AppCompatActivity {
         //Si se suspende la activity, se para la ejecución en el caso que este en marcha
         if (service != null) {
             service.shutdownNow();
-            Toast.makeText(this, "Ejecución parada", Toast.LENGTH_SHORT).show();
         }
     }
 }

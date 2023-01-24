@@ -9,6 +9,7 @@ import android.widget.Toast;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class SplashActivity extends AppCompatActivity {
 
@@ -19,7 +20,13 @@ public class SplashActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        espera = ThreadLocalRandom.current().nextInt(1, 5001);
+
         super.onCreate(savedInstanceState);
+
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setIcon(R.mipmap.ic_unicorn_launcher_round);
+
         setContentView(R.layout.activity_splash);
 
         service = Executors.newSingleThreadExecutor();
@@ -50,7 +57,7 @@ public class SplashActivity extends AppCompatActivity {
     private String tareaPesada(int tiempo){
         try {
             Thread.sleep(tiempo);
-            return "Dormido durante " + tiempo + " seconds";
+            return "Dormido durante " + tiempo + " milisegundos";
         } catch (InterruptedException e) {
             e.printStackTrace();
             return e.getMessage();
@@ -66,6 +73,7 @@ public class SplashActivity extends AppCompatActivity {
         //Si se suspende la activity, se para la ejecución en el caso que este en marcha
         if (service != null) {
             service.shutdownNow();
+            Toast.makeText(this, "Ejecución parada", Toast.LENGTH_SHORT).show();
         }
     }
 }

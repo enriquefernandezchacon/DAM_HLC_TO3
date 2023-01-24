@@ -19,11 +19,18 @@ public class MainActivity extends AppCompatActivity {
     private Button btnArrancar;
     private Button btnParar;
     private TextView resultados;
+    private RunnableClass tareaPesada;
+
+    private Thread hilo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setIcon(R.mipmap.ic_unicorn_launcher_round);
+
         tiempoEdT = (EditText) findViewById(R.id.in_time);
         btnArrancar = (Button) findViewById(R.id.btn_arrancar);
         btnParar = (Button) findViewById(R.id.btn_parar);
@@ -32,37 +39,39 @@ public class MainActivity extends AppCompatActivity {
         btnArrancar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                resultados.setText("");
                 String tiempoDormido = tiempoEdT.getText().toString();
                 if (tiempoDormido.matches("")) {
                     Toast.makeText(MainActivity.this, "Introduce un número de segundos", Toast.LENGTH_SHORT).show();
                     return;
-                }
-                else{
+                } else if (hilo != null && hilo.isAlive()) {
+                    Toast.makeText(MainActivity.this, "El hilo ya esta en ejecución", Toast.LENGTH_SHORT).show();
+                    return;
+                } else {
+                    resultados.setText("");
                     cierraTeclado();
-                    resultados.append("Ejecutando Tarea pesada: "+tiempoDormido+" sg --> ");
-                    tareaPesada(Integer.parseInt(tiempoDormido),resultados);
-                    resultados.append("Terminada tarea pesada \n");
+                    tareaPesada = new RunnableClass(Integer.parseInt(tiempoDormido), resultados);
+                    hilo = new Thread(tareaPesada);
+                    hilo.start();
+                }
+            }
+        });
+
+        btnParar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (hilo != null && hilo.isAlive()) {
+                    tareaPesada.paraEjecucion();
                 }
             }
         });
     }
 
-
-    //Esta función simula una operación pesada, que se va a tomar tiempo en terminarse.
-    //Devuelve un string.
-    protected void tareaPesada(int tiempo,TextView result){
-        try {
-            for(int i=0; i < tiempo ;i++) {
-                result.append("..."+i + "...");
-                Thread.sleep(1000);
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            Log.e("TareaPesada", e.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.e("TareaPesada", e.getMessage());
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (hilo != null && hilo.isAlive()) {
+            hilo.interrupt();
+            Toast.makeText(this, "Ejecución parada", Toast.LENGTH_SHORT).show();
         }
     }
 

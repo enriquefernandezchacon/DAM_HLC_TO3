@@ -18,16 +18,19 @@ public class SplashActivity extends AppCompatActivity {
     private ProgressDialog progressDialog;
     private ExecutorService service;
 
+    //Uso el método onStart para asegurarme que si desde el menú se vuelve hacia atras,
+    //se inicie de nuevo
     @Override
     public void onStart() {
         super.onStart();
-
+        //Creo uno hilo conductor
         service = Executors.newSingleThreadExecutor();
-
+        //Creo un valor aleatorio para el tiempo de espera
         espera = ThreadLocalRandom.current().nextInt(3000, 6001);
 
         service.execute(() -> {
             //Con este metodo, simulamos el onPreExecute
+            //Generamos los diálogos que se mostrarán al inicio
             runOnUiThread(() -> {
                 progressDialog = ProgressDialog.show(SplashActivity.this,
                         "Dialogo de Progreso",
@@ -35,10 +38,11 @@ public class SplashActivity extends AppCompatActivity {
                 Toast.makeText(SplashActivity.this, "Recibiendo datos...", Toast.LENGTH_SHORT).show();
             });
 
-            //El código a continuación simula doInBackground
+            //El código a continuación simula doInBackground();
             mensajeDeTareaPesada = tareaPesada(espera);
 
-            //Con este metodo, simulamos el onPostExecute
+            //Con este metodo, simulamos el onPostExecute()
+            //Se ejecutara tras la tarea pesada
             runOnUiThread(() -> {
                 Toast.makeText(SplashActivity.this, mensajeDeTareaPesada, Toast.LENGTH_SHORT).show();
                 progressDialog.dismiss();

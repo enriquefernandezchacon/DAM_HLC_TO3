@@ -39,18 +39,24 @@ public class MainActivity extends AppCompatActivity {
         btnArrancar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                //Obtenemos el valor del campo de tiempoDormido
                 String tiempoDormido = tiempoEdT.getText().toString();
+                //Comprobamos que no este vacío
                 if (tiempoDormido.matches("")) {
                     Toast.makeText(MainActivity.this, "Introduce un número de segundos", Toast.LENGTH_SHORT).show();
                     return;
+                //Comprobamos que el hilo no este en ejecución
                 } else if (hilo != null && hilo.isAlive()) {
                     Toast.makeText(MainActivity.this, "El hilo ya esta en ejecución", Toast.LENGTH_SHORT).show();
                     return;
+                //Lanzamos el texto
                 } else {
-                    resultados.setText("");
                     cierraTeclado();
+                    //Instancio un nuevo objeto runnable
                     tareaPesada = new RunnableClass(Integer.parseInt(tiempoDormido), resultados);
+                    //Asigno el runnable a un nuevo hilo
                     hilo = new Thread(tareaPesada);
+                    //Arranco el hilo
                     hilo.start();
                 }
             }
@@ -59,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
         btnParar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                //Compruebo si el hilo esta en ejecución para pararlo
                 if (hilo != null && hilo.isAlive()) {
                     tareaPesada.paraEjecucion();
                 }
@@ -68,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+        //Si se cierra la activity, se para la ejecución
         if (hilo != null && hilo.isAlive()) {
             hilo.interrupt();
         }

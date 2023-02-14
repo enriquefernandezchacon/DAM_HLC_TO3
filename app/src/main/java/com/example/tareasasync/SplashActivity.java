@@ -5,6 +5,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.view.KeyEvent;
 import android.widget.Toast;
 
 import java.util.concurrent.ExecutorService;
@@ -17,16 +19,23 @@ public class SplashActivity extends AppCompatActivity {
     private String mensajeDeTareaPesada;
     private ProgressDialog progressDialog;
     private ExecutorService service;
+    private boolean doubleBackToExitPressedOnce = false;
 
-    //Uso el método onStart para asegurarme que si desde el menú se vuelve hacia atras,
-    //se inicie de nuevo
     @Override
-    public void onStart() {
-        super.onStart();
-        //Creo uno hilo conductor
-        service = Executors.newSingleThreadExecutor();
-        //Creo un valor aleatorio para el tiempo de espera
-        espera = ThreadLocalRandom.current().nextInt(3000, 6001);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setIcon(R.mipmap.ic_unicorn_launcher_round);
+
+        setContentView(R.layout.activity_splash);
+    }
+
+    @Override
+    protected void onResume() {
+        espera = ThreadLocalRandom.current().nextInt(5000, 10000);
+        super.onResume();
+        service = Executors.newFixedThreadPool(1);
 
         service.execute(() -> {
             //Con este metodo, simulamos el onPreExecute
@@ -46,27 +55,13 @@ public class SplashActivity extends AppCompatActivity {
             runOnUiThread(() -> {
                 Toast.makeText(SplashActivity.this, mensajeDeTareaPesada, Toast.LENGTH_SHORT).show();
                 progressDialog.dismiss();
-
                 Intent intent = new Intent(SplashActivity.this, MainActivity.class);
                 startActivity(intent);
             });
         });
-
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        espera = ThreadLocalRandom.current().nextInt(1, 5001);
-
-        super.onCreate(savedInstanceState);
-
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
-        getSupportActionBar().setIcon(R.mipmap.ic_unicorn_launcher_round);
-
-        setContentView(R.layout.activity_splash);
-    }
-
-    private String tareaPesada(int tiempo){
+    private String tareaPesada(int tiempo) {
         try {
             Thread.sleep(tiempo);
             return "Dormido durante " + tiempo + " milisegundos";

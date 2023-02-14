@@ -19,9 +19,12 @@ public class MainActivity extends AppCompatActivity {
     private Button btnArrancar;
     private Button btnParar;
     private TextView resultados;
-    private RunnableClass tareaPesada;
 
     private Thread hilo;
+    private int tiempo;
+    private int iteracionBucle;
+    private boolean flagTareaBackground;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,36 +42,32 @@ public class MainActivity extends AppCompatActivity {
         btnArrancar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 //Obtenemos el valor del campo de tiempoDormido
                 String tiempoDormido = tiempoEdT.getText().toString();
                 //Comprobamos que no este vacío
                 if (tiempoDormido.matches("")) {
                     Toast.makeText(MainActivity.this, "Introduce un número de segundos", Toast.LENGTH_SHORT).show();
                     return;
-                //Comprobamos que el hilo no este en ejecución
+                    //Comprobamos que el hilo no este en ejecución
                 } else if (hilo != null && hilo.isAlive()) {
                     Toast.makeText(MainActivity.this, "El hilo ya esta en ejecución", Toast.LENGTH_SHORT).show();
                     return;
-                //Lanzamos el texto
+                    //Lanzamos el texto
                 } else {
                     cierraTeclado();
                     //Instancio un nuevo objeto runnable
-                    tareaPesada = new RunnableClass(Integer.parseInt(tiempoDormido), resultados);
-                    //Asigno el runnable a un nuevo hilo
-                    hilo = new Thread(tareaPesada);
-                    //Arranco el hilo
-                    hilo.start();
+                    flagTareaBackground = true;
+                    tiempo = Integer.valueOf(tiempoEdT.getText().toString());
+                    ejecutarTareaEnBackground();
                 }
             }
         });
 
         btnParar.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                //Compruebo si el hilo esta en ejecución para pararlo
-                if (hilo != null && hilo.isAlive()) {
-                    tareaPesada.paraEjecucion();
-                }
+            public void onClick(View v) {
+                flagTareaBackground = false;
             }
         });
     }
@@ -77,18 +76,69 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         //Si se cierra la activity, se para la ejecución
         if (hilo != null && hilo.isAlive()) {
-            hilo.interrupt();
+            flagTareaBackground = false;
         }
         super.onPause();
     }
 
-    protected void cierraTeclado(){
+    protected void cierraTeclado() {
         try {
-            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
         } catch (Exception e) {
             // TODO: handle exception
         }
+    }
+
+    private void ejecutarTareaEnBackground() {
+        hilo = new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+
+                    runOnUiThread(() -> {
+                        //Mensaje tras finalizar la tarea
+                        resultados.setText("");
+                        resultados.append("Iniciando Tarea Pesada");
+                    });
+                    //Bucle para contar el tiempo
+                    for (int i = 1; i <= tiempo; i++) {
+                        iteracionBucle = i;
+                        //Comprueba que no se ha dado la orden de parar la ejecución
+                        if (flagTareaBackground) {
+                            //Escribbir en textarea
+                            runOnUiThread(() -> {
+                                resultados.append("..." + iteracionBucle);
+                            });
+
+                            Thread.sleep(1000);
+                        }
+                    }
+
+                    runOnUiThread(() -> {
+                        //Mensaje tras finalizar la tarea
+                        resultados.append("...Terminada tarea pesada");
+                    });
+
+                    //comprueba si se ha parado la tarea manualmente
+                    if (!flagTareaBackground) {
+                        runOnUiThread(() -> {
+                            resultados.append("...Tarea detenida por el usuario");
+                        });
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    Log.e("TareaPesada", e.getMessage());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Log.e("TareaPesada", e.getMessage());
+                }
+
+            }
+        });
+
+        hilo.start();
     }
 
 }

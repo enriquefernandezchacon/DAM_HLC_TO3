@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -13,11 +12,11 @@ import android.widget.TextView;
 
 import android.widget.Toast;
 
+import java.util.Objects;
+
 public class MainActivity extends AppCompatActivity {
 
     private EditText tiempoEdT;
-    private Button btnArrancar;
-    private Button btnParar;
     private TextView resultados;
 
     private Thread hilo;
@@ -31,45 +30,35 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayShowHomeEnabled(true);
         getSupportActionBar().setIcon(R.mipmap.ic_unicorn_launcher_round);
 
-        tiempoEdT = (EditText) findViewById(R.id.in_time);
-        btnArrancar = (Button) findViewById(R.id.btn_arrancar);
-        btnParar = (Button) findViewById(R.id.btn_parar);
-        resultados = (TextView) findViewById(R.id.tv_result);
+        tiempoEdT = findViewById(R.id.in_time);
+        Button btnArrancar = findViewById(R.id.btn_arrancar);
+        Button btnParar = findViewById(R.id.btn_parar);
+        resultados = findViewById(R.id.tv_result);
 
-        btnArrancar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        btnArrancar.setOnClickListener(v -> {
 
-                //Obtenemos el valor del campo de tiempoDormido
-                String tiempoDormido = tiempoEdT.getText().toString();
-                //Comprobamos que no este vacío
-                if (tiempoDormido.matches("")) {
-                    Toast.makeText(MainActivity.this, "Introduce un número de segundos", Toast.LENGTH_SHORT).show();
-                    return;
-                    //Comprobamos que el hilo no este en ejecución
-                } else if (hilo != null && hilo.isAlive()) {
-                    Toast.makeText(MainActivity.this, "El hilo ya esta en ejecución", Toast.LENGTH_SHORT).show();
-                    return;
-                    //Lanzamos el texto
-                } else {
-                    cierraTeclado();
-                    //Instancio un nuevo objeto runnable
-                    flagTareaBackground = true;
-                    tiempo = Integer.valueOf(tiempoEdT.getText().toString());
-                    ejecutarTareaEnBackground();
-                }
+            //Obtenemos el valor del campo de tiempoDormido
+            String tiempoDormido = tiempoEdT.getText().toString();
+            //Comprobamos que no este vacío
+            if (tiempoDormido.matches("")) {
+                Toast.makeText(MainActivity.this, "Introduce un número de segundos", Toast.LENGTH_SHORT).show();
+                //Comprobamos que el hilo no este en ejecución
+            } else if (hilo != null && hilo.isAlive()) {
+                Toast.makeText(MainActivity.this, "El hilo ya esta en ejecución", Toast.LENGTH_SHORT).show();
+                //Lanzamos el texto
+            } else {
+                cierraTeclado();
+                //Instancio un nuevo objeto runnable
+                flagTareaBackground = true;
+                tiempo = Integer.parseInt(tiempoEdT.getText().toString());
+                ejecutarTareaEnBackground();
             }
         });
 
-        btnParar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                flagTareaBackground = false;
-            }
-        });
+        btnParar.setOnClickListener(v -> flagTareaBackground = false);
     }
 
     @Override
@@ -91,51 +80,39 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void ejecutarTareaEnBackground() {
-        hilo = new Thread(new Runnable() {
-            @Override
-            public void run() {
+        hilo = new Thread(() -> {
+            try {
+                runOnUiThread(() -> {
+                    //Mensaje tras finalizar la tarea
+                    resultados.setText("");
+                    resultados.append("Iniciando Tarea Pesada");
+                });
+                //Bucle para contar el tiempo
+                for (int i = 1; i <= tiempo; i++) {
+                    iteracionBucle = i;
+                    //Comprueba que no se ha dado la orden de parar la ejecución
+                    if (flagTareaBackground) {
+                        //Escribbir en textarea
+                        runOnUiThread(() -> resultados.append("..." + iteracionBucle));
 
-                try {
-
-                    runOnUiThread(() -> {
-                        //Mensaje tras finalizar la tarea
-                        resultados.setText("");
-                        resultados.append("Iniciando Tarea Pesada");
-                    });
-                    //Bucle para contar el tiempo
-                    for (int i = 1; i <= tiempo; i++) {
-                        iteracionBucle = i;
-                        //Comprueba que no se ha dado la orden de parar la ejecución
-                        if (flagTareaBackground) {
-                            //Escribbir en textarea
-                            runOnUiThread(() -> {
-                                resultados.append("..." + iteracionBucle);
-                            });
-
-                            Thread.sleep(1000);
-                        }
+                        Thread.sleep(1000);
                     }
-
-                    runOnUiThread(() -> {
-                        //Mensaje tras finalizar la tarea
-                        resultados.append("...Terminada tarea pesada");
-                    });
-
-                    //comprueba si se ha parado la tarea manualmente
-                    if (!flagTareaBackground) {
-                        runOnUiThread(() -> {
-                            resultados.append("...Tarea detenida por el usuario");
-                        });
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    Log.e("TareaPesada", e.getMessage());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    Log.e("TareaPesada", e.getMessage());
                 }
 
+                runOnUiThread(() -> resultados.append("...Terminada tarea pesada"));
+
+                //comprueba si se ha parado la tarea manualmente
+                if (!flagTareaBackground) {
+                    runOnUiThread(() -> resultados.append("...Tarea detenida por el usuario"));
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                Log.e("TareaPesada", e.getMessage());
+            } catch (Exception e) {
+                e.printStackTrace();
+                Log.e("TareaPesada", e.getMessage());
             }
+
         });
 
         hilo.start();
